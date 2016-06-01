@@ -12,6 +12,7 @@ private:
 
 public:
 
+	CircularVector() : m_vec(64), m_start(0), m_size(64) {}
 	explicit CircularVector(int size) : m_vec(size), m_start{ 0 }, m_size{ size } {}
 	CircularVector(int size, const T& val) : m_vec(size, val), m_start{ 0 }, m_size{ size } {}
 

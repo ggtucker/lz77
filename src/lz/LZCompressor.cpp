@@ -11,13 +11,6 @@ namespace lz {
 		m_windowOffsetBits( windowOffsetBits ),
 		m_matchLengthBits( matchLengthBits ),
 		m_literalLengthBits( literalLengthBits ),
-		m_windowSize( static_cast<int>(std::pow(2, windowOffsetBits)) ),
-		m_maxMatchLength( static_cast<int>(std::pow(2, matchLengthBits)) - 1 ),
-		m_maxLiteralLength( static_cast<int>(std::pow(2, literalLengthBits)) - 1 ),
-		m_bufferSize( m_maxMatchLength ),
-		m_processedSize( m_windowSize - m_bufferSize ),
-		m_window(m_processedSize, 0),
-		m_lookahead(m_bufferSize, 0),
 		m_literalQueue(),
 		m_uncompressedBytes( 0 ),
 		m_compressedBytes( 3 ),
@@ -27,19 +20,29 @@ namespace lz {
 		m_searchTime( 0 ),
 		m_currentOffset( 0 ) {
 
-		if (windowOffsetBits < MIN_WINDOW_OFFSET_BITS || windowOffsetBits > MAX_WINDOW_OFFSET_BITS) {
-			std::cerr << "N was " << windowOffsetBits << ", but must be in range ["
+		if (m_windowOffsetBits < MIN_WINDOW_OFFSET_BITS || m_windowOffsetBits > MAX_WINDOW_OFFSET_BITS) {
+			std::cerr << "N was " << m_windowOffsetBits << ", but must be in range ["
 				<< MIN_WINDOW_OFFSET_BITS << "," << MAX_WINDOW_OFFSET_BITS << "]";
 			exit(EXIT_FAILURE);
-		} else if (matchLengthBits < MIN_MATCH_LENGTH_BITS || matchLengthBits > MAX_MATCH_LENGTH_BITS) {
-			std::cerr << "L was " << matchLengthBits << ", but must be in range ["
+		} else if (m_matchLengthBits < MIN_MATCH_LENGTH_BITS || m_matchLengthBits > MAX_MATCH_LENGTH_BITS) {
+			std::cerr << "L was " << m_matchLengthBits << ", but must be in range ["
 				<< MIN_MATCH_LENGTH_BITS << "," << MAX_MATCH_LENGTH_BITS << "]";
 			exit(EXIT_FAILURE);
-		} else if (literalLengthBits < MIN_LITERAL_LENGTH_BITS || literalLengthBits > MAX_LITERAL_LENGTH_BITS) {
-			std::cerr << "S was " << literalLengthBits << ", but must be in range ["
+		} else if (m_literalLengthBits < MIN_LITERAL_LENGTH_BITS || m_literalLengthBits > MAX_LITERAL_LENGTH_BITS) {
+			std::cerr << "S was " << m_literalLengthBits << ", but must be in range ["
 				<< MIN_LITERAL_LENGTH_BITS << "," << MAX_LITERAL_LENGTH_BITS << "]";
 			exit(EXIT_FAILURE);
 		}
+
+		m_windowSize = static_cast<int>(std::pow(2, m_windowOffsetBits));
+		m_maxMatchLength = static_cast<int>(std::pow(2, m_matchLengthBits)) - 1;
+		m_maxLiteralLength = static_cast<int>(std::pow(2, m_literalLengthBits)) - 1;
+		m_bufferSize = m_maxMatchLength;
+		m_processedSize = m_windowSize - m_bufferSize;
+		m_bufferSize = m_maxMatchLength;
+		m_processedSize = m_windowSize - m_bufferSize;
+		m_window = CircularVector<Byte>(m_processedSize, 0);
+		m_lookahead = CircularVector<Byte>(m_bufferSize, 0);
 	}
 
 	void Compressor::Compress(const std::string& fileName) {
