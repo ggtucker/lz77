@@ -8,8 +8,9 @@ namespace lz {
 		int matchLengthBits = 4;
 		int literalLengthBits = 3;
 
-		for (const std::string& arg : args) {
-
+		for (int i = 0; i < args.size(); ++i) {
+			const std::string& arg = args[i];
+			
 			if (arg.length() > 0 && arg.substr(0, 1) != "-") {
 				fileName = arg;
 			}

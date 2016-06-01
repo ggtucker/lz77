@@ -3,6 +3,7 @@
 #include <cassert>
 #include <algorithm>
 #include <iomanip>
+#include <cmath>
 
 namespace lz {
 
@@ -28,7 +29,7 @@ namespace lz {
 	}
 
 	void Expander::Expand(std::istream& in) {
-		std::clock_t time = std::clock();
+		clock_t time = clock();
 
 		initialize(in);
 		std::cerr << "[N] Window offset bits: " << m_windowOffsetBits << std::endl;
@@ -51,9 +52,8 @@ namespace lz {
 			}
 		}
 
-		time = std::clock() - time;
+		time = clock() - time;
 
-		std::cerr << std::fixed << std::setprecision(2) << std::endl;
 		std::cerr << "=================================================" << std::endl;
 		std::cerr << "|             DECOMPRESSION RESULTS             |" << std::endl;
 		std::cerr << "=================================================" << std::endl;
@@ -93,21 +93,24 @@ namespace lz {
 		m_windowOffsetBits = in.get();
 		m_matchLengthBits = in.get();
 		m_literalLengthBits = in.get();
-		m_windowSize = static_cast<int>(pow(2, m_windowOffsetBits));
-		m_maxMatchLength = static_cast<int>(pow(2, m_matchLengthBits)) - 1;
-		m_maxLiteralLength = static_cast<int>(pow(2, m_literalLengthBits)) - 1;
+		m_windowSize = static_cast<int>(std::pow(2, m_windowOffsetBits));
+		m_maxMatchLength = static_cast<int>(std::pow(2, m_matchLengthBits)) - 1;
+		m_maxLiteralLength = static_cast<int>(std::pow(2, m_literalLengthBits)) - 1;
 		m_bufferSize = m_maxMatchLength;
 		m_processedSize = m_windowSize - m_bufferSize;
 
 		if (m_windowOffsetBits < MIN_WINDOW_OFFSET_BITS || m_windowOffsetBits > MAX_WINDOW_OFFSET_BITS) {
-			throw std::invalid_argument("N was " + std::to_string(m_windowOffsetBits) + ", but must be in range ["
-				+ std::to_string(MIN_WINDOW_OFFSET_BITS) + "," + std::to_string(MAX_WINDOW_OFFSET_BITS) + "]");
+			std::cerr << "N was " << m_windowOffsetBits << ", but must be in range ["
+				<< MIN_WINDOW_OFFSET_BITS << "," << MAX_WINDOW_OFFSET_BITS << "]";
+			exit(EXIT_FAILURE);
 		} else if (m_matchLengthBits < MIN_MATCH_LENGTH_BITS || m_matchLengthBits > MAX_MATCH_LENGTH_BITS) {
-			throw std::invalid_argument("L was " + std::to_string(m_matchLengthBits) + ", but must be in range ["
-				+ std::to_string(MIN_MATCH_LENGTH_BITS) + "," + std::to_string(MAX_MATCH_LENGTH_BITS) + "]");
+			std::cerr << "L was " << m_matchLengthBits << ", but must be in range ["
+				<< MIN_MATCH_LENGTH_BITS << "," << MAX_MATCH_LENGTH_BITS << "]";
+			exit(EXIT_FAILURE);
 		} else if (m_literalLengthBits < MIN_LITERAL_LENGTH_BITS || m_literalLengthBits > MAX_LITERAL_LENGTH_BITS) {
-			throw std::invalid_argument("S was " + std::to_string(m_literalLengthBits) + ", but must be in range ["
-				+ std::to_string(MIN_LITERAL_LENGTH_BITS) + "," + std::to_string(MAX_LITERAL_LENGTH_BITS) + "]");
+			std::cerr << "S was " << m_literalLengthBits << ", but must be in range ["
+				<< MIN_LITERAL_LENGTH_BITS << "," << MAX_LITERAL_LENGTH_BITS << "]";
+			exit(EXIT_FAILURE);
 		}
 	}
 

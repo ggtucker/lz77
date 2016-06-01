@@ -1,4 +1,4 @@
-OPTS = -std=c++11 -Wall
+OPTS = -std=c++0x -Wall
 
 LZ: Main.o LZCompressor.o LZFactory.o
 	g++ $(OPTS) -o LZ.exe Main.o LZCompressor.o LZFactory.o

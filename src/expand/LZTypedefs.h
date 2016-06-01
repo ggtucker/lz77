@@ -9,6 +9,6 @@ namespace lz {
 	static const int MIN_LITERAL_LENGTH_BITS = 1;
 	static const int MAX_LITERAL_LENGTH_BITS = 5;
 
-	using Byte = char;
+	typedef char Byte;
 
 }

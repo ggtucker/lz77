@@ -1,4 +1,4 @@
-OPTS = -std=c++11 -Wall
+OPTS = -std=c++0x -Wall
 
 EXPAND: Main.o LZExpander.o LZFactory.o
 	g++ $(OPTS) -o EXPAND.exe Main.o LZExpander.o LZFactory.o

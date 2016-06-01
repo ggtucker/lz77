@@ -6,8 +6,8 @@
 #include <vector>
 #include <queue>
 #include <map>
-#include <iomanip>
 #include <list>
+#include <ctime>
 #include "CircularVector.h"
 
 namespace lz {
@@ -27,12 +27,12 @@ namespace lz {
 		int m_processedSize;
 
 		// Timers
-		std::clock_t m_encodeTime;
-		std::clock_t m_shiftTime;
-		std::clock_t m_searchTime;
+		clock_t m_encodeTime;
+		clock_t m_shiftTime;
+		clock_t m_searchTime;
 
 		// Implementation members
-		using CharPair = std::pair<char, char>;
+		typedef std::pair<char, char> CharPair;
 		std::map<CharPair, std::list<int>> m_matchMap;
 		CircularVector<Byte> m_window;
 		CircularVector<Byte> m_lookahead;

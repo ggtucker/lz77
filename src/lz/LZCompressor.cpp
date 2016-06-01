@@ -2,40 +2,44 @@
 #include <fstream>
 #include <cassert>
 #include <algorithm>
+#include <cstdlib>
+#include <cmath>
 
 namespace lz {
 
 	Compressor::Compressor(int windowOffsetBits, int matchLengthBits, int literalLengthBits) :
-		m_windowOffsetBits{ windowOffsetBits },
-		m_matchLengthBits{ matchLengthBits },
-		m_literalLengthBits{ literalLengthBits },
-		m_windowSize{ static_cast<int>(pow(2, windowOffsetBits)) },
-		m_maxMatchLength{ static_cast<int>(pow(2, matchLengthBits)) - 1 },
-		m_maxLiteralLength{ static_cast<int>(pow(2, literalLengthBits)) - 1 },
-		m_bufferSize{ m_maxMatchLength },
-		m_processedSize{ m_windowSize - m_bufferSize },
+		m_windowOffsetBits( windowOffsetBits ),
+		m_matchLengthBits( matchLengthBits ),
+		m_literalLengthBits( literalLengthBits ),
+		m_windowSize( static_cast<int>(std::pow(2, windowOffsetBits)) ),
+		m_maxMatchLength( static_cast<int>(std::pow(2, matchLengthBits)) - 1 ),
+		m_maxLiteralLength( static_cast<int>(std::pow(2, literalLengthBits)) - 1 ),
+		m_bufferSize( m_maxMatchLength ),
+		m_processedSize( m_windowSize - m_bufferSize ),
 		m_window(m_processedSize, 0),
 		m_lookahead(m_bufferSize, 0),
-		m_literalQueue{},
-		m_uncompressedBytes{ 0 },
-		m_compressedBytes{ 3 },
-		m_numProcessedBytes{ 0 },
-		m_encodeTime{ 0 },
-		m_shiftTime{ 0 },
-		m_searchTime{ 0 },
-		m_currentOffset{ 0 } {
+		m_literalQueue(),
+		m_uncompressedBytes( 0 ),
+		m_compressedBytes( 3 ),
+		m_numProcessedBytes( 0 ),
+		m_encodeTime( 0 ),
+		m_shiftTime( 0 ),
+		m_searchTime( 0 ),
+		m_currentOffset( 0 ) {
 
 		if (windowOffsetBits < MIN_WINDOW_OFFSET_BITS || windowOffsetBits > MAX_WINDOW_OFFSET_BITS) {
-			throw std::invalid_argument("N was " + std::to_string(windowOffsetBits) + ", but must be in range ["
-				+ std::to_string(MIN_WINDOW_OFFSET_BITS) + "," + std::to_string(MAX_WINDOW_OFFSET_BITS) + "]");
+			std::cerr << "N was " << windowOffsetBits << ", but must be in range ["
+				<< MIN_WINDOW_OFFSET_BITS << "," << MAX_WINDOW_OFFSET_BITS << "]";
+			exit(EXIT_FAILURE);
 		} else if (matchLengthBits < MIN_MATCH_LENGTH_BITS || matchLengthBits > MAX_MATCH_LENGTH_BITS) {
-			throw std::invalid_argument("L was " + std::to_string(matchLengthBits) + ", but must be in range ["
-				+ std::to_string(MIN_MATCH_LENGTH_BITS) + "," + std::to_string(MAX_MATCH_LENGTH_BITS) + "]");
+			std::cerr << "L was " << matchLengthBits << ", but must be in range ["
+				<< MIN_MATCH_LENGTH_BITS << "," << MAX_MATCH_LENGTH_BITS << "]";
+			exit(EXIT_FAILURE);
 		} else if (literalLengthBits < MIN_LITERAL_LENGTH_BITS || literalLengthBits > MAX_LITERAL_LENGTH_BITS) {
-			throw std::invalid_argument("S was " + std::to_string(literalLengthBits) + ", but must be in range ["
-				+ std::to_string(MIN_LITERAL_LENGTH_BITS) + "," + std::to_string(MAX_LITERAL_LENGTH_BITS) + "]");
+			std::cerr << "S was " << literalLengthBits << ", but must be in range ["
+				<< MIN_LITERAL_LENGTH_BITS << "," << MAX_LITERAL_LENGTH_BITS << "]";
+			exit(EXIT_FAILURE);
 		}
-
 	}
 
 	void Compressor::Compress(const std::string& fileName) {
@@ -60,7 +64,7 @@ namespace lz {
 		std::cerr << "[L] Match length bits: " << m_matchLengthBits << std::endl;
 		std::cerr << "[S] Literal length bits: " << m_literalLengthBits << std::endl;
 
-		std::clock_t time = std::clock();
+		clock_t time = clock();
 
 		Byte N = m_windowOffsetBits;
 		Byte L = m_matchLengthBits;
@@ -92,9 +96,8 @@ namespace lz {
 
 		printEOF(outputByte, usedBits);
 
-		time = std::clock() - time;
+		time = clock() - time;
 
-		std::cerr << std::fixed << std::setprecision(2) << std::endl;
 		std::cerr << "=================================================" << std::endl;
 		std::cerr << "|              COMPRESSION RESULTS              |" << std::endl;
 		std::cerr << "=================================================" << std::endl;
@@ -108,12 +111,12 @@ namespace lz {
 	}
 
 	void Compressor::printBits(Byte& outputByte, int& usedBits, int value, int numBits) {
-		std::clock_t time = std::clock();
+		clock_t time = clock();
 
 		int remainingBits = numBits;
 		while (remainingBits > 0) {
 			int bitsToAppend = std::min(8 - usedBits, remainingBits);
-			int mask = (static_cast<int>(pow(2, remainingBits)) - 1) - (static_cast<int>(pow(2, remainingBits - bitsToAppend)) - 1);
+			int mask = (static_cast<int>(std::pow(2, remainingBits)) - 1) - (static_cast<int>(std::pow(2, remainingBits - bitsToAppend)) - 1);
 
 			outputByte = outputByte << bitsToAppend;
 			outputByte |= (mask & value) >> (remainingBits - bitsToAppend);
@@ -128,7 +131,7 @@ namespace lz {
 			remainingBits -= bitsToAppend;
 		}
 
-		m_encodeTime += (std::clock() - time);
+		m_encodeTime += (clock() - time);
 	}
 
 	void Compressor::slideMatchMap() {
@@ -155,7 +158,7 @@ namespace lz {
 	}
 
 	void Compressor::slide(std::istream& in, int numBytes, bool shiftWindow) {
-		std::clock_t time = std::clock();
+		clock_t time = clock();
 
 		char nextChar;
 		int shift = 0;
@@ -178,7 +181,7 @@ namespace lz {
 			--m_bufferSize;
 		}
 
-		m_shiftTime += (std::clock() - time);
+		m_shiftTime += (clock() - time);
 	}
 
 	void Compressor::enqueueLiteral(Byte& outputByte, int& usedBits, Byte literalByte) {
@@ -189,7 +192,7 @@ namespace lz {
 	}
 
 	void Compressor::findLongestMatch(int& length, int& offset) {
-		std::clock_t time = std::clock();
+		clock_t time = clock();
 
 		length = 0;
 		offset = 0;
@@ -215,7 +218,7 @@ namespace lz {
 			}
 		}
 
-		m_searchTime += (std::clock() - time);
+		m_searchTime += (clock() - time);
 	}
 
 	void Compressor::printLengthOffset(Byte& outputByte, int& usedBits, int length, int offset) {
