@@ -8,3 +8,5 @@ make
 cd $dir
 cp src/expand/EXPAND.exe $dir/EXPAND
 cp src/lz/LZ.exe $dir/LZ
+chmod 755 $dir/EXPAND
+chmod 755 $dir/LZ
